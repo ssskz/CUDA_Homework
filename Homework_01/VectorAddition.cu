@@ -30,6 +30,14 @@ int main(){
         h_A[i] = rand()%100;
         h_B[i] = rand()%100;
     }
+      
+    //Use the GPU to check whether the addition is right.
+    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    int threadsPerBlock = 256;
+    int threadsPerGrid = (N + threadsPerBlock-1)/threadsPerBlock;
+    vecAdd<<<threadsPerGrid, threadsPerBlock>>>(d_A, d_B, d_C);
+    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
   
     //Get the CPU running time, using cudaEvent method
     cudaEvent_t start, stop;
@@ -44,14 +52,6 @@ int main(){
     float elapsedTime;
     cudaEventElapsedTime(&elapsedTime, start, stop);
     printf("Processing time: %f (ms)\n", elapsedTime);
-  
-    //Use the GPU to check whether the addition is right.
-    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
-    int threadsPerBlock = 256;
-    int threadsPerGrid = (N + threadsPerBlock-1)/threadsPerBlock;
-    vecAdd<<<threadsPerGrid, threadsPerBlock>>>(d_A, d_B, d_C);
-    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
   
     //Check the result of the vector addition.
     for(int i = 0; i < N; i++){
